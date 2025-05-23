@@ -1,0 +1,184 @@
+Cactus Code Thorn ICPertFLRW_GRH
+Author(s)    : Robyn L. Munoz
+Maintainer(s): Robyn L. Munoz
+Licence      : GNU General Public License
+--------------------------------------------------------------------------
+
+Purpose of this Thorn
+=====================
+This thorn provides initial conditions for an FLRW metric perturbed with the 
+comoving curvature perturbation Rc in the comoving gauge. 
+Rc is defined as a sum of sinusoidals, cosines or exponentials whose 
+parameters are defined in param.ccl. 
+
+While the metric only have first order scalar 
+perturbations, the extrinsic curvature and energy density are 
+computed exactly in full from the Hamiltonian constraint, hence vector 
+and tensor perturbations are initially present at higher order. 
+Metric quantities are provided to ADMBase while fluid quantities are 
+passed to HydroBase.
+
+Copyright
+=========
+Copyright (C) 2025  Robyn L. Munoz
+
+This thorn is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This thorn is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this thorn.  If not, see <http://www.gnu.org/licenses/>.
+
+You may contact the author at : r.l.munoz@sussex.ac.uk
+
+Publications
+============
+Article where these initial conditions are described:
+@article{M.Bruni_etal_2014_Mar,
+    title     = {Non-Gaussian initial conditions in $\Lambda$CDM: Newtonian, 
+                 relativistic, and primordial contributions},
+    author    = {Bruni, M. and Hidalgo, J. C. and Meures, N. and Wands, D.},
+    journal   = {The Astrophysical Journal},
+    volume    = {785},
+    number    = {1},
+    pages     = {2},
+    year      = {2014},
+    month     = {3},
+    doi       = {10.1088/0004-637X/785/1/2},
+    archivePrefix = {arXiv},
+    eprint    = {astro-ph/1307.1478}}
+
+Article where these initial conditions are further decribed and 
+ICPertFLRW_GRH is developped and tested:
+@article{R.L.Munoz_M.Bruni_2023,
+    title     = {Structure formation and quasispherical collapse from initial 
+                 curvature perturbations with numerical relativity 
+                 simulations},
+    author    = {Munoz, R. L. and Bruni, M.},
+    journal   = {Physical Review D},
+    volume    = {107},
+    number    = {12},
+    pages     = {123536},
+    numpages  = {26},
+    year      = {2023},
+    month     = {6},
+    doi       = {10.1103/PhysRevD.107.123536},
+    archivePrefix = {arXiv},
+    eprint    = {astro-ph/2302.09033}}
+
+How to implement this thorn into Einstein Toolkit:
+==================================================
+===== 1) Have a working version of Einstein Toolkit
+# Follow the instructions here
+# https://github.com/nds-org/jupyter-et/blob/master/tutorial-server/notebooks/CactusTutorial.ipynb
+# Don't forget to try to run HelloWorld
+
+#If you're doing this on an HPC
+>> cd pathtocactus
+>> ./simfactory/bin/sim setup-silent --machine=HPCname
+>> ./simfactory/bin/sim build --machine=HPCname --thornlist=thornlists/einsteintoolkit.th
+
+#The paths of the HPC config files are:
+# pathtocactus/simfactory/mdb/machines/HPCname.ini
+# pathtocactus/simfactory/mdb/optionlists/HPCname.cfg
+# pathtocactus/simfactory/mdb/runscripts/HPCname.run
+# pathtocactus/simfactory/mdb/submitscripts/HPCname.sub
+
+===== 2) Modify Time
+# In arrangements/CactusBase/Time/param.ccl change 
+private:
+CCTK_KEYWORD dtfac "The standard timestep condition dt = dtfac*max(delta_space)"
+# to:
+restricted:
+CCTK_KEYWORD dtfac "The standard timestep condition dt = dtfac*max(delta_space)"
+# This is because dtfac is overwritten 
+# Time::dtfac = ICPertFLRW_GRH_time_fac * scale_factor
+
+===== 3) Modify GRHydro remove mask
+# In arrangements/EinsteinEvolve/GRHydro/src/GRHydro_UpdateMask.F90
+# when you see
+atmosphere_mask_real(i,j,k) = 1
+atmosphere_mask(i,j,k) = 1
+# change the 1 to 0
+# This is to not have the atmosphere interfere with underdense regions
+
+===== 4) Include ICPertFLRW_GRH in Einstein Toolkit
+# link
+>> cd path_to_Cactus/Cactus/arrangements/EinsteinInitialData/
+>> ln -s path_to_thorn/ICPertFLRW_GRH .
+# add to Cactus/thornlists/einsteintoolkit.th, in EinsteinInitialData section
+EinsteinInitialData/ICPertFLRW_GRH
+
+===== 5) Compile Einstein Toolkit
+# in Cactus directory
+>> ./simfactory/bin/sim build -j2 --thornlist=thornlists/einsteintoolkit.th
+# Or
+>> ./simfactory/bin/sim build --machine=HPCname --thornlist=thornlists/einsteintoolkit.th
+
+===== 6) Run test.par to check if it works
+>> ./simfactory/bin/sim create-submit test_ICPertFLRW_GRH --parfile=arrangements/EinsteinInitialData/ICPertFLRW_GRH/test_ICPertFLRW_GRH.par --procs=1 --num-threads=1
+# Or
+>> ./simfactory/bin/sim create-submit test_ICPertFLRW_GRH --machine=HPCname --parfile=arrangements/EinsteinInitialData/ICPertFLRW_GRH/test_ICPertFLRW_GRH.par --procs=1 --num-threads=1
+
+===== 7) Check the output
+with
+>> tail -30 ~/simulations/test_ICPertFLRW_GRH/output-0000/test_ICPertFLRW_GRH.out
+you should see:
+-----------------------------------------------------------------------------------------------------------------------------------
+Iteration      Time |              ADMBASE::gxx |              ADMBASE::kxx |            HYDROBASE::rho |                ML_BSSN::H
+                    |      minimum      maximum |      minimum      maximum |      minimum      maximum |      minimum      maximum
+-----------------------------------------------------------------------------------------------------------------------------------
+        0     1.000 |    0.0000235    0.0000235 |   -0.0000156   -0.0000156 |    0.0530351    0.0530682 |   -0.0000001    0.0000001
+        1     1.018 |    0.0000240    0.0000240 |   -0.0000157   -0.0000157 |    0.0511504    0.0511828 |   -0.0000001    0.0000001
+        2     1.037 |    0.0000246    0.0000246 |   -0.0000158   -0.0000158 |    0.0493645    0.0493961 |   -0.0000001    0.0000001
+        3     1.055 |    0.0000252    0.0000252 |   -0.0000159   -0.0000159 |    0.0476704    0.0477013 |   -0.0000001    0.0000001
+        4     1.073 |    0.0000258    0.0000258 |   -0.0000160   -0.0000160 |    0.0460621    0.0460923 |   -0.0000001    0.0000001
+        5     1.091 |    0.0000263    0.0000264 |   -0.0000161   -0.0000161 |    0.0445339    0.0445634 |   -0.0000001    0.0000001
+        6     1.110 |    0.0000269    0.0000270 |   -0.0000162   -0.0000162 |    0.0430804    0.0431093 |   -0.0000001    0.0000001
+        7     1.128 |    0.0000275    0.0000276 |   -0.0000163   -0.0000163 |    0.0416970    0.0417252 |   -0.0000001    0.0000001
+        8     1.146 |    0.0000281    0.0000281 |   -0.0000164   -0.0000164 |    0.0403791    0.0404067 |   -0.0000001    0.0000001
+        9     1.164 |    0.0000287    0.0000287 |   -0.0000165   -0.0000164 |    0.0391227    0.0391498 |   -0.0000001    0.0000001
+       10     1.183 |    0.0000293    0.0000293 |   -0.0000165   -0.0000165 |    0.0379241    0.0379506 |   -0.0000001    0.0000001
+       11     1.201 |    0.0000299    0.0000300 |   -0.0000166   -0.0000166 |    0.0367797    0.0368057 |   -0.0000001    0.0000000
+INFO (Carpet): Terminating due to cctk_final_time at t = 1.200794
+
+===== 8) Be happy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

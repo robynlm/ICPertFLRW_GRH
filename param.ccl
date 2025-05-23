@@ -1,0 +1,193 @@
+
+#################################################
+#              Extended keywords
+#################################################
+
+SHARES:ADMBase
+EXTENDS KEYWORD initial_data
+{
+  "ICPertFLRW_GRH" :: "Space-Time Data Initialised by ICPertFLRW_GRH thorn"
+}
+
+SHARES: HydroBase
+EXTENDS CCTK_KEYWORD initial_hydro
+{
+  "ICPertFLRW_GRH" :: "Hydro Data Initialised by ICPertFLRW_GRH thorn"
+}
+
+SHARES: Time
+USES REAL dtfac
+
+#################################################
+#          This Thorn's parameters
+#################################################
+
+########################
+#       Keywords
+########################
+
+restricted:
+CCTK_KEYWORD ICPertFLRW_GRH_Rcprofile "Choose Rc distribution"
+{
+  "sin"  :: "Sum of sinusoidal functions"
+  "cos"  :: "Sum of cosine functions"
+  "exp" :: "Central exponential function"
+} "sin"
+
+restricted:
+CCTK_KEYWORD ICPertFLRW_GRH_time "This defines time to either be conformal (eta) or proper (tau), with dtau = scale_factor * deta"
+{
+  "conformal"  :: "time = eta, lapse_initial = scale_factor, dtlapse_initial = scale_factor^2 Hprop = - (1/3) lapse^2 K, make sure you adjust gauge evolution, the dtfac and set z_comoving_ref = -1"
+  "proper" :: "time = tau, lapse_initial = 1 and dtlapse_initial = 0"
+} "proper"
+
+########################
+#      Variables
+########################
+
+private:
+CCTK_REAL ICPertFLRW_GRH_z_comoving_ref "Comoving reference redshift, so scale factor today: a_0 = 1 + z_comoving_ref"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_G "Gravitational Constant"
+{
+  *:* :: ""
+} 1
+
+restricted:
+CCTK_REAL ICPertFLRW_GRH_c "Speed of light"
+{
+  *:* :: ""
+} 1
+
+restricted:
+CCTK_REAL ICPertFLRW_GRH_h "Dimensionless Hubble parameter"
+{
+  *:* :: ""
+} 0.6737
+
+restricted:
+CCTK_REAL ICPertFLRW_GRH_time_fac "if using proper time, dtfac is overwritten as Time::dtfac = time_fac * scale_factor"
+{
+  *:* :: ""
+} 0.1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_Amp_x[20] "Amplitude of the perturbation, along x"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_Amp_y[20] "Amplitude of the perturbation, along y"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_Amp_z[20] "Amplitude of the perturbation, along z"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_Amp_xy[20] "Amplitude of the perturbation, along (x - y), only for cos profile"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_lambda_x[20] "Wavelength of the perturbation along x"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_lambda_y[20] "Wavelength of the perturbation along y"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_lambda_z[20] "Wavelength of the perturbation along z"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_lambda_xy[20] "Wavelength of the perturbation along (x - y), only for cos profile"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_phi_x[20] "Wavelength shift along x"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_phi_y[20] "Wavelength shift along y"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_phi_z[20] "Wavelength shift along z"
+{
+  *:* :: ""
+} 0
+
+
+# if ICPertFLRW_GRH_Rcprofile = "exp"
+
+private:
+CCTK_REAL ICPertFLRW_GRH_exp_amplitude "Amplitude of Rc"
+{
+  *:* :: ""
+} 0
+
+private:
+CCTK_REAL ICPertFLRW_GRH_variance_x "Variance of Rc along x"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_variance_y "Variance of Rc along y"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_variance_z "Variance of Rc along z"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_steepness_x "Steepness of Rc along x"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_steepness_y "Steepness of Rc along y"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_REAL ICPertFLRW_GRH_steepness_z "Steepness of Rc along z"
+{
+  *:* :: ""
+} 1
+
+private:
+CCTK_INT ICPertFLRW_GRH_need_to_fix_dtfac "Don't touch this, this is to not repeat a calculation when using mesh refinement"
+{
+  0:1 :: ""
+} 1
